@@ -3,7 +3,7 @@
 ## About Me
 - Name: Ehsan U Roohi
 - GitHub Username: EhsanURoohi
-- Major: Your Major
+- Major: Cyber Security Engineering
 - Semester: Spring 2026
 
 ## About This Course
