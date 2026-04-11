@@ -1,0 +1,23 @@
+name: Hello Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pipeline:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Stage
+        run: echo "Building project..."
+
+      - name: Test Stage
+        run: echo "Running tests..."
+
+      - name: Deploy Stage
+        run: echo "Deploying application..."
