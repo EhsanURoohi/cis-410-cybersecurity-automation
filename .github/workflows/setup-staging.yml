@@ -1,0 +1,22 @@
+name: Setup — Staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Docker on Staging VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            sudo apt-get update
+            sudo apt-get install -y docker.io
+            sudo systemctl enable docker
+            sudo systemctl start docker
+            sudo usermod -aG docker student
