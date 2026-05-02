@@ -5,18 +5,17 @@ on:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Install Docker on Staging VM
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          script: |
-            sudo apt-get update
+      - name: Run Docker setup on staging VM via SSH
+        run: |
+          ssh -i ${{ secrets.STAGING_SSH_KEY }} \
+          -o StrictHostKeyChecking=no \
+          ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+            sudo apt-get update -y
             sudo apt-get install -y docker.io
             sudo systemctl enable docker
             sudo systemctl start docker
             sudo usermod -aG docker student
+          EOF
