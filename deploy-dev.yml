@@ -15,13 +15,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 🔍 DEBUG STEP (KEEP THIS — it saves you later)
+      - name: DEBUG list files
+        run: |
+          pwd
+          ls -la
+          ls -la app || true
+          ls -la Dockerfile || true
+          ls -la docker-compose.yml || true
+
       - name: Copy app files to Dev VM
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
 
           scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
-            ./app ./Dockerfile ./.dockerignore ./docker-compose.yml \
+            app Dockerfile .dockerignore docker-compose.yml \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
 
           rm /tmp/deploy_key
@@ -56,4 +65,4 @@ jobs:
         run: |
           sleep 4
           curl -f "http://${{ secrets.DEV_HOST }}:5000/health" | python3 -m json.tool
-          echo "=== Smoke test passed — app is live at http://${{ secrets.DEV_HOST }}:5000 ==="
+          echo "=== Smoke test passed ==="
