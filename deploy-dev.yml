@@ -1,5 +1,3 @@
-# .github/workflows/deploy-dev.yml
-
 name: "Deploy — Dev"
 
 on:
@@ -12,26 +10,35 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # ─────────────────────────────────────────────
+      # STEP 1: Checkout repo
+      # ─────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🔍 DEBUG STEP - Helps you see exactly what the runner sees
-      - name: DEBUG list files
-        run: |
-          pwd
-          ls -la
-
+      # ─────────────────────────────────────────────
+      # STEP 2: Copy files to Dev VM (FIXED PATHS)
+      # ─────────────────────────────────────────────
       - name: Copy app files to Dev VM
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
 
-          # FIXED: Using ./* ensures we copy all files (Dockerfile, etc.) without crashing if one is named differently
-          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r ./* \
+          echo "=== DEBUG: workspace contents ==="
+          ls -la $GITHUB_WORKSPACE
+
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
+            $GITHUB_WORKSPACE/app \
+            $GITHUB_WORKSPACE/Dockerfile \
+            $GITHUB_WORKSPACE/.dockerignore \
+            $GITHUB_WORKSPACE/docker-compose.yml \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
 
           rm /tmp/deploy_key
 
+      # ─────────────────────────────────────────────
+      # STEP 3: Deploy on Dev VM
+      # ─────────────────────────────────────────────
       - name: Deploy Flask container
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
@@ -40,8 +47,7 @@ jobs:
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           set -e
-          
-          # Ensure directory exists and we are in it
+
           cd /opt/app
 
           export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
@@ -50,10 +56,12 @@ jobs:
 
           echo "=== Deploying ${GITHUB_SHA:0:7} from ${GITHUB_REF_NAME} ==="
 
-          # FIXED: Flags moved to the end of the command to prevent "unknown flag" errors
-          sudo docker compose down --remove-orphans
-          sudo DEPLOY_TIME="${DEPLOY_TIME}" GITHUB_SHA="${GITHUB_SHA}" GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
-            docker compose up -d --build --remove-orphans
+          sudo docker compose -f docker-compose.yml down --remove-orphans
+
+          sudo DEPLOY_TIME="${DEPLOY_TIME}" \
+               GITHUB_SHA="${GITHUB_SHA}" \
+               GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
+               docker compose -f docker-compose.yml up -d --build
 
           echo "=== Deploy complete ==="
           sudo docker compose ps
@@ -61,9 +69,11 @@ jobs:
 
           rm /tmp/deploy_key
 
+      # ─────────────────────────────────────────────
+      # STEP 4: Smoke test
+      # ─────────────────────────────────────────────
       - name: Smoke test
         run: |
           sleep 4
-          # Replace 5000 with your actual app port if different
-          curl -f "http://${{ secrets.DEV_HOST }}:5000/health" || echo "Health check failed but moving on..."
-          echo "=== Smoke test phase finished ==="
+          curl -f "http://${{ secrets.DEV_HOST }}:5000/health" | python3 -m json.tool
+          echo "=== Smoke test passed — app is live ==="
