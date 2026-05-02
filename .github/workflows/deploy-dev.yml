@@ -17,27 +17,39 @@ jobs:
         uses: actions/checkout@v4
 
       # ─────────────────────────────────────────────
-      # STEP 2: Copy files to Dev VM (FIXED PATHS)
+      # STEP 2: Debug (IMPORTANT for troubleshooting)
+      # ─────────────────────────────────────────────
+      - name: Debug workspace
+        run: |
+          pwd
+          echo "=== WORKSPACE FILES ==="
+          ls -la
+
+      # ─────────────────────────────────────────────
+      # STEP 3: Copy files to Dev VM (FIXED)
       # ─────────────────────────────────────────────
       - name: Copy app files to Dev VM
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
 
-          echo "=== DEBUG: workspace contents ==="
-          ls -la $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
 
-          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
-            $GITHUB_WORKSPACE/app \
-            $GITHUB_WORKSPACE/Dockerfile \
-            $GITHUB_WORKSPACE/.dockerignore \
-            $GITHUB_WORKSPACE/docker-compose.yml \
+          echo "=== FINAL FILE CHECK ==="
+          ls -la Dockerfile
+          ls -la docker-compose.yml
+
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+            app \
+            Dockerfile \
+            docker-compose.yml \
+            .dockerignore \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
 
           rm /tmp/deploy_key
 
       # ─────────────────────────────────────────────
-      # STEP 3: Deploy on Dev VM
+      # STEP 4: Deploy on Dev VM
       # ─────────────────────────────────────────────
       - name: Deploy Flask container
         run: |
@@ -56,12 +68,12 @@ jobs:
 
           echo "=== Deploying ${GITHUB_SHA:0:7} from ${GITHUB_REF_NAME} ==="
 
-          sudo docker compose -f docker-compose.yml down --remove-orphans
+          sudo docker compose down --remove-orphans
 
           sudo DEPLOY_TIME="${DEPLOY_TIME}" \
                GITHUB_SHA="${GITHUB_SHA}" \
                GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
-               docker compose -f docker-compose.yml up -d --build
+               docker compose up -d --build
 
           echo "=== Deploy complete ==="
           sudo docker compose ps
@@ -70,7 +82,7 @@ jobs:
           rm /tmp/deploy_key
 
       # ─────────────────────────────────────────────
-      # STEP 4: Smoke test
+      # STEP 5: Smoke test
       # ─────────────────────────────────────────────
       - name: Smoke test
         run: |
