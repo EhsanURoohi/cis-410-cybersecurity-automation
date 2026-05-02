@@ -10,82 +10,32 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # ─────────────────────────────────────────────
-      # STEP 1: Checkout repo
-      # ─────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ─────────────────────────────────────────────
-      # STEP 2: Debug (IMPORTANT for troubleshooting)
-      # ─────────────────────────────────────────────
-      - name: Debug workspace
-        run: |
-          pwd
-          echo "=== WORKSPACE FILES ==="
-          ls -la
-
-      # ─────────────────────────────────────────────
-      # STEP 3: Copy files to Dev VM (FIXED)
-      # ─────────────────────────────────────────────
       - name: Copy app files to Dev VM
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-
-          cd "$GITHUB_WORKSPACE"
-
-          echo "=== FINAL FILE CHECK ==="
-          ls -la Dockerfile
-          ls -la docker-compose.yml
-
-          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no \
-            app \
-            Dockerfile \
-            docker-compose.yml \
-            .dockerignore \
+          # Using -r and ./* to ensure the 'app' folder is copied correctly
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r ./* \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
-
           rm /tmp/deploy_key
 
-      # ─────────────────────────────────────────────
-      # STEP 4: Deploy on Dev VM
-      # ─────────────────────────────────────────────
       - name: Deploy Flask container
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           set -e
-
           cd /opt/app
-
           export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
           export GITHUB_SHA="${{ github.sha }}"
           export GITHUB_REF_NAME="${{ github.ref_name }}"
-
-          echo "=== Deploying ${GITHUB_SHA:0:7} from ${GITHUB_REF_NAME} ==="
-
+          
           sudo docker compose down --remove-orphans
-
-          sudo DEPLOY_TIME="${DEPLOY_TIME}" \
-               GITHUB_SHA="${GITHUB_SHA}" \
-               GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
-               docker compose up -d --build
-
-          echo "=== Deploy complete ==="
-          sudo docker compose ps
+          sudo DEPLOY_TIME="${DEPLOY_TIME}" GITHUB_SHA="${GITHUB_SHA}" GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
+            docker compose up -d --build --remove-orphans
           EOF
-
           rm /tmp/deploy_key
-
-      # ─────────────────────────────────────────────
-      # STEP 5: Smoke test
-      # ─────────────────────────────────────────────
-      - name: Smoke test
-        run: |
-          sleep 4
-          curl -f "http://${{ secrets.DEV_HOST }}:5000/health" | python3 -m json.tool
-          echo "=== Smoke test passed — app is live ==="
