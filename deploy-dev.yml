@@ -39,7 +39,7 @@ jobs:
           chmod 600 /tmp/deploy_key
 
           scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
-            app/ Dockerfile .dockerignore docker-compose.yml \
+            app Dockerfile .dockerignore docker-compose.yml \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
 
           rm /tmp/deploy_key
