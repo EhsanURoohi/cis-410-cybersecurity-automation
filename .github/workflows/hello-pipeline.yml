@@ -1,4 +1,5 @@
 name: Hello Pipeline
+# Triggering a re-index of the workflow graph
 
 on:
   push:
