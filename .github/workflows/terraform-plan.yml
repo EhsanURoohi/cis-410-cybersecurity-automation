@@ -27,7 +27,7 @@ jobs:
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           # UPDATED: Using your existing deployment service account
-          service_account: 'cis410-deploy-sa@cis410-ehsan.iam.gserviceaccount.com'
+          service_account: ${{ vars.SA_EMAIL }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
