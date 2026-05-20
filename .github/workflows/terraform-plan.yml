@@ -9,7 +9,7 @@ on:
 
 jobs:
   terraform-plan:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted # Use your 'ehsan-runner'
     name: Plan VPC Infrastructure
 
     permissions:
@@ -26,7 +26,8 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github'
-          service_account: 'github-actions-sa@cis410-ehsan.iam.gserviceaccount.com'
+          # UPDATED: Using your existing deployment service account
+          service_account: 'cis410-deploy-sa@cis410-ehsan.iam.gserviceaccount.com'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -46,4 +47,4 @@ jobs:
         working-directory: terraform/week7
         env:
           TF_VAR_project_id: 'cis410-ehsan'
-          TF_VAR_my_ip_cidr: '0.0.0.0/0' # Allows the runner to build verification blocks cleanly
+          TF_VAR_my_ip_cidr: '0.0.0.0/0'
