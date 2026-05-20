@@ -59,3 +59,18 @@ resource "google_compute_firewall" "deny_all_ingress" {
   source_ranges = ["0.0.0.0/0"]
   description   = "Explicit deny-all fallback — blocks unmatched traffic"
 }
+resource "google_compute_firewall" "allow_https" {
+  name          = "cis410-vpc-allow-https-manual"
+  network       = google_compute_network.vpc.name
+  project       = var.project_id
+  priority      = 1000
+  direction     = "INGRESS"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["443"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  description   = "Manual rule created outside Terraform (drift demo)"
+}
