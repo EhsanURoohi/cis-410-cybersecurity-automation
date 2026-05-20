@@ -28,6 +28,8 @@ jobs:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           # UPDATED: Using your existing deployment service account
           service_account: ${{ vars.SA_EMAIL }}
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
