@@ -9,7 +9,8 @@ on:
 
 jobs:
   terraform-plan:
-    runs-on: self-hosted # Use your 'ehsan-runner'
+    # Changed from 'self-hosted' to 'ubuntu-latest' to support OIDC correctly
+    runs-on: ubuntu-latest 
     name: Plan VPC Infrastructure
 
     permissions:
@@ -20,14 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # GitHub sends a JWT to GCP. GCP validates it using the pool you created.
-      # GCP returns a temporary token. Nothing is stored.
       - name: Authenticate to GCP via OIDC
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          # UPDATED: Using your existing deployment service account
-          service_account: ${{ vars.SA_EMAIL }}
+          workload_identity_provider: 'projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github'
+          service_account: 'cis410-deploy-sa@cis410-ehsan.iam.gserviceaccount.com'
           create_credentials_file: true
           export_environment_variables: true
 
