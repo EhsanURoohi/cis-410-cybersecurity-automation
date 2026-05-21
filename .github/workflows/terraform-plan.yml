@@ -25,11 +25,8 @@ jobs:
 
       - name: Authenticate to GCP via OIDC
         uses: google-github-actions/auth@v2
-        env:
-          # Force the environment variable to be set
-          WIF_PROVIDER_FIX: 'projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github-provider'
         with:
-          # REPLACE THESE STRINGS WITH YOUR ACTUAL VALUES
+          # Directly using the values here ignores the broken Variables tab
           workload_identity_provider: 'projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github-provider'
           service_account: 'cis410-deploy-sa@cis410-ehsan.iam.gserviceaccount.com'
 
