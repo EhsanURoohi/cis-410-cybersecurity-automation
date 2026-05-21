@@ -26,9 +26,10 @@ jobs:
       - name: Authenticate to GCP via OIDC
         uses: google-github-actions/auth@v2
         with:
-          # Directly using the values here ignores the broken Variables tab
-          workload_identity_provider: 'projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github-provider'
+          workload_identity_provider: '//iam.googleapis.com/projects/126083374521/locations/global/workloadIdentityPools/cis410-pool/providers/github-provider'
           service_account: 'cis410-deploy-sa@cis410-ehsan.iam.gserviceaccount.com'
+          token_format: 'access_token'
+          access_token_lifetime: '1200s'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
